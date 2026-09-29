@@ -4,7 +4,9 @@ import me.shedaniel.autoconfig.ConfigData;
 import me.shedaniel.autoconfig.annotation.Config;
 import me.shedaniel.cloth.clothconfig.shadowed.blue.endless.jankson.Comment;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 @Config(name = "server_v6")
 public class ServerConfig  implements ConfigData {
@@ -122,7 +124,7 @@ public class ServerConfig  implements ConfigData {
     @Comment("Lesser Juggernauts Knockback Resistance ")
     public  float juggernautLesserKnockbackResistance = 0.75F;
 
-    @Comment("Chance for Forsaken Rogues to spawn naturally")
+    @Comment("Chance for Lesser Rogues to spawn naturally")
     public  float rogueLesser = 1.0F;
     @Comment("Lesser Rogues Max Health ")
     public  float rogueLesserMaxHealth = 50;
@@ -150,9 +152,9 @@ public class ServerConfig  implements ConfigData {
     @Comment("Lesser Mercenary Defiance ")
     public  float mercenaryLesserDefiance = 1F;
 
-    @Comment("Lesser Scale ")
+    @Comment("Lesser Scale (no effect on 1.20.1)")
     public  float lesserScale = 1.0F;
-    @Comment("Greater Scale ")
+    @Comment("Greater Scale (no effect on 1.20.1)")
     public  float greaterScale = 1.2F;
 
 
@@ -168,9 +170,9 @@ public class ServerConfig  implements ConfigData {
     public  float magusKnockbackResistance = 1F;
     @Comment("Forsaken Magus Fire Power ")
     public  float magusFirePower = 8F;
-    @Comment("Forsaken Magus Frost Power ")
+    @Comment("Forsaken Magus Arcane Power (the key name is historical: this value has always been applied to the Arcane school)")
     public  float magusFrostPower = 8F;
-    @Comment("Forsaken Magus Arcane Power ")
+    @Comment("Unused (kept so existing config files load unchanged). Use magusFrostPower for Arcane and magusFrostSchoolPower for Frost.")
     public  float magusArcanePower = 8F;
     @Comment("Forsaken Magus Soul Power ")
     public  float magusSoulPower = 8F;
@@ -196,7 +198,7 @@ public class ServerConfig  implements ConfigData {
     @Comment("Minibosses friendly fire multiplier (No effect with Betrayal on)")
     public float friendlyFire = 0.2000F;
 
-    @Comment("Global Spawn Multiplier (Integer)")
+    @Comment("Natural spawn weight for each cultist in its spawn biomes (Integer, 0 disables biome spawns)")
     public int mult = 1;
     @Comment("Time in days from the beginning of the world until the first patrols can happen")
     public long patrolGrace =  10L;
@@ -220,5 +222,67 @@ public class ServerConfig  implements ConfigData {
     public boolean allRequired = false;
     @Comment("Distance to enforce advancement requirement.")
     public float distance = 128;
+
+    // ---- Additions in this fork. Defaults reproduce the original behaviour. ----
+
+    @Comment("Forsaken Magus Frost Power (Frost school; the original mod gave the Magus none)")
+    public float magusFrostSchoolPower = 0F;
+
+    @Comment("Follow range of every cultist except Lesser Mercenaries")
+    public float followRange = 32F;
+    @Comment("Lesser Mercenary follow range (the original mod set this to the Lesser Mercenary max health, 50)")
+    public float mercenaryLesserFollowRange = 50F;
+    @Comment("Experience dropped by Lesser and Greater cultists")
+    public int experience = 100;
+    @Comment("Experience dropped by the Forsaken Magus")
+    public int magusExperience = 500;
+    @Comment("Cultists take no fall damage")
+    public boolean fallDamageImmune = true;
+    @Comment("Untamed cultists despawn like normal monsters when no player is near")
+    public boolean despawnWhenFarAway = true;
+
+    @Comment("Chance that a Greater cultist drops a Lavos Horn (0 disables, 1 always)")
+    public float lavosHornDropChanceGreater = 0.125F;
+    @Comment("Chance that a Lesser cultist drops a Lavos Horn (0 disables, 1 always)")
+    public float lavosHornDropChanceLesser = 0.125F;
+    @Comment("Chance that a cultist drops each item it holds or wears. Above 1 the drop is guaranteed and undamaged. 0 keeps equipment on the corpse.")
+    public float equipmentDropChance = 100F;
+
+    @Comment("Lesser cultists spawn naturally in biomes and join patrols")
+    public boolean lesserNaturalSpawns = true;
+    @Comment("Greater cultists spawn naturally in biomes and join patrols")
+    public boolean greaterNaturalSpawns = false;
+    @Comment("Natural spawns use the biomes where witches spawn")
+    public boolean spawnInWitchBiomes = true;
+    @Comment("Extra biomes for natural spawns. Biome ids (minecraft:plains) or biome tags (#minecraft:is_forest)")
+    public List<String> extraSpawnBiomes = new ArrayList<>();
+    @Comment("Biomes removed from natural biome spawns. Biome ids or biome tags. Camps, outposts and the dungeon trial still spawn cultists here")
+    public List<String> excludedSpawnBiomes = new ArrayList<>();
+    @Comment("Smallest group of a natural spawn")
+    public int spawnGroupMin = 1;
+    @Comment("Largest group of a natural spawn")
+    public int spawnGroupMax = 1;
+    @Comment("Natural spawns need darkness like other monsters (patrols ignore this)")
+    public boolean spawnRequiresDarkness = true;
+
+    @Comment("Chance that a patrol spawns once the cooldown is over (0-1)")
+    public double patrolChance = 0.2;
+    @Comment("Patrols only spawn during the day")
+    public boolean patrolDaytimeOnly = true;
+    @Comment("Patrols spawn at least this many blocks from the player on each axis")
+    public int patrolMinDistance = 24;
+    @Comment("Patrols spawn less than this many blocks from the player on each axis")
+    public int patrolMaxDistance = 48;
+    @Comment("Patrol size is the local difficulty rounded up, plus this many members")
+    public int patrolExtraMembers = 1;
+    @Comment("Patrols do not spawn near villages")
+    public boolean patrolAvoidVillages = true;
+
+    @Comment("Infamy gained for killing a cultist")
+    public int infamyPerKill = 5;
+    @Comment("Infamy gained each time a player angers a cultist")
+    public int infamyPerProvoke = 1;
+    @Comment("Cultists attack players whose infamy exceeds their benevolence by more than this (ignored when trueAnarchy is on)")
+    public int infamyThreshold = 5;
 
 }
