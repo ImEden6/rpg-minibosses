@@ -98,7 +98,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
 
     protected MinibossEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
         super(entityType, world);
-        this.experiencePoints = 100;
+        this.experiencePoints = RPGMinibossesEntities.config.experience;
         this.lookControl = new MinibossLookControl(this);
         this.moveControl = new MinibossMoveConrol(this);
 
@@ -112,7 +112,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
 
     protected MinibossEntity(EntityType<? extends PathAwareEntity> entityType, World world, float spawnCoeff) {
         super(entityType, world);
-        this.experiencePoints = 100;
+        this.experiencePoints = RPGMinibossesEntities.config.experience;
         this.spawnCoeff = spawnCoeff;
         this.moveControl = new MinibossMoveConrol(this);
 
@@ -312,7 +312,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
         }
 
         if( damageSource.getAttacker() instanceof ServerPlayerEntity player){
-            player.getStatHandler().setStat(player,Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY),player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY))+5);
+            player.getStatHandler().setStat(player,Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY),player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY))+RPGMinibossesEntities.config.infamyPerKill);
         }
         super.onDeath(damageSource);
     }
@@ -327,7 +327,10 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
     }
     @Override
     public boolean canSpawn(WorldView world) {
-       
+        // Per-type "chance to spawn naturally" from the config.
+        if (this.getRandom().nextFloat() >= this.spawnCoeff) {
+            return false;
+        }
         if(RPGMinibossesEntities.config.enableAdvancementRequirement) {
             if (this.getWorld().getPlayers().stream().anyMatch(player -> {
                 var satisfied = false;
@@ -497,7 +500,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
 
     @Override
     protected float getDropChance(EquipmentSlot slot) {
-        return 100F;
+        return RPGMinibossesEntities.config.equipmentDropChance;
     }
 
 
@@ -566,7 +569,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
         if(source.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY)){
             return super.damage(source, amount);
         }
-        if(source.isIn(DamageTypeTags.IS_FALL)){
+        if(source.isIn(DamageTypeTags.IS_FALL) && RPGMinibossesEntities.config.fallDamageImmune){
             return false;
         }
         if(!this.notPetrified()){
@@ -745,7 +748,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
         }
         else{
             this.targetSelector.add(2, new ActiveTargetGoal(this, PlayerEntity.class, true, (player) ->!this.isTamed() && player instanceof ServerPlayerEntity playerEntity
-                    && playerEntity.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY)) > 5 + playerEntity.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.BENEVOLENCE))));
+                    && playerEntity.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY)) > RPGMinibossesEntities.config.infamyThreshold + playerEntity.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.BENEVOLENCE))));
 
         }
 
@@ -992,7 +995,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
 
     public void setAngryAt(@Nullable UUID angryAt) {
         if(angryAt != this.angryAt && this.angerTime == 0 && !this.getWorld().isClient() &&   ((ServerWorld)this.getWorld()).getEntity(angryAt) instanceof ServerPlayerEntity player){
-          player.getStatHandler().setStat(player,Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY),player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY))+1);
+          player.getStatHandler().setStat(player,Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY),player.getStatHandler().getStat(Stats.CUSTOM.getOrCreateStat(RPGMinibosses.INFAMY))+RPGMinibossesEntities.config.infamyPerProvoke);
 
         }
         this.angryAt = angryAt;
@@ -1018,7 +1021,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
     }
 
     public static boolean canSpawn(EntityType<? extends PathAwareEntity> type, ServerWorldAccess world, SpawnReason spawnReason, BlockPos pos, Random random) {
-        return spawnReason.equals(SpawnReason.PATROL) ||  isSpawnDark((ServerWorldAccess)world, pos, random) && canMobSpawn(type, world, spawnReason, pos, random);
+        return spawnReason.equals(SpawnReason.PATROL) ||  (!RPGMinibossesEntities.config.spawnRequiresDarkness || isSpawnDark((ServerWorldAccess)world, pos, random)) && canMobSpawn(type, world, spawnReason, pos, random);
 
     }
 
@@ -1244,7 +1247,7 @@ public class MinibossEntity extends PathAwareEntity implements Tameable, GeoEnti
 
     @Override
     public boolean canImmediatelyDespawn(double distanceSquared) {
-        return !this.isTamed();
+        return RPGMinibossesEntities.config.despawnWhenFarAway && !this.isTamed();
     }
 
 

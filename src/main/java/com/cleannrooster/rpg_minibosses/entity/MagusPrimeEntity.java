@@ -96,7 +96,7 @@ public class MagusPrimeEntity extends PathAwareEntity implements GeoEntity {
     public MagusPrimeEntity(EntityType<? extends PathAwareEntity> entityType, World world) {
         super(entityType, world);
         this.bossBar = (ServerBossBar) (new ServerBossBar(this.getDisplayName(), BossBar.Color.PURPLE, BossBar.Style.PROGRESS)).setDarkenSky(true);
-        this.experiencePoints = 500;
+        this.experiencePoints = RPGMinibossesEntities.config.magusExperience;
         this.moveControl = new MinibossMoveConrol(this);
 
         this.lookControl = new MinibossLookControl(this);
