@@ -11,6 +11,7 @@ import me.shedaniel.autoconfig.AutoConfig;
 import me.shedaniel.autoconfig.serializer.JanksonConfigSerializer;
 import me.shedaniel.autoconfig.serializer.PartitioningSerializer;
 import net.fabricmc.fabric.api.biome.v1.BiomeModifications;
+import net.fabricmc.fabric.api.biome.v1.BiomeSelectionContext;
 import net.fabricmc.fabric.api.biome.v1.BiomeSelectors;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
@@ -37,9 +38,11 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.registry.tag.BiomeTags;
 import net.minecraft.registry.tag.StructureTags;
+import net.minecraft.registry.tag.TagKey;
 import net.minecraft.structure.OceanMonumentGenerator;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -129,10 +132,18 @@ public class RPGMinibossesEntities {
     }
 
     public static double normalMovementSpeed = 0.23000000417232513;
+
+    // Only add Frost when configured, so the default Magus has exactly the attributes it always had.
+    private static DefaultAttributeContainer.Builder withMagusFrost(DefaultAttributeContainer.Builder builder) {
+        if (config.magusFrostSchoolPower != 0) {
+            builder.add(SpellSchools.FROST.attribute, config.magusFrostSchoolPower);
+        }
+        return builder;
+    }
     public static final Entry<JuggernautEntity> JUGGERNAUT_ENTITY_ENTRY = new Entry<JuggernautEntity>("juggernaut",
             (entityType,world) -> new JuggernautEntity(entityType,world,false,config.juggernautGreater), HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(ReabsorptionInit.DEFIANCE,config.juggernautGreaterDefiance)
             .add(EntityAttributes.GENERIC_ARMOR,config.juggernautGreaterArmor)
             .add(EntityAttributes.GENERIC_ATTACK_DAMAGE,config.juggernautGreaterAttackDamage)
@@ -145,7 +156,7 @@ public class RPGMinibossesEntities {
     public static final Entry<ArtilleristEntity> ARTILLERIST_ENTITY_ENTRY = new Entry<ArtilleristEntity>("mercenary",
             (entityType,world) -> new ArtilleristEntity(entityType,world,false,config.mercenaryGreater), HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ARMOR,config.mercenaryGreaterArmor)
             .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, normalMovementSpeed*config.mercenaryGreaterMovementSpeed)
             .add(EntityAttributes.GENERIC_MAX_HEALTH,config.mercenaryGreaterMaxHealth)
@@ -157,7 +168,7 @@ public class RPGMinibossesEntities {
     public static final Entry<TricksterEntity> TRICKSTER_ENTITY_ENTRY = new Entry<TricksterEntity>("trickster",
             (entityType,world) -> new TricksterEntity(entityType,world,false,config.rogueGreater),HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ATTACK_SPEED,6)
             .add(EntityAttributes.GENERIC_ARMOR,config.rogueGreaterArmor)
             .add(EntityAttributes.GENERIC_ATTACK_DAMAGE,config.rogueGreaterAttackDamage)
@@ -171,7 +182,7 @@ public class RPGMinibossesEntities {
     public static final Entry<JuggernautEntity> M_JUGGERNAUT_ENTITY_ENTRY = new Entry<JuggernautEntity>("minor_juggernaut",
             (entityType,world) -> new JuggernautEntity(entityType,world,true,config.juggernautLesser), HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(ReabsorptionInit.DEFIANCE,config.juggernautLesserDefiance)
             .add(EntityAttributes.GENERIC_ARMOR,config.juggernautLesserArmor)
             .add(EntityAttributes.GENERIC_ATTACK_DAMAGE,config.juggernautLesserAttackDamage)
@@ -184,7 +195,7 @@ public class RPGMinibossesEntities {
     public static final Entry<ArtilleristEntity> M_ARTILLERIST_ENTITY_ENTRY = new Entry<ArtilleristEntity>("minor_mercenary",
             (entityType,world) -> new ArtilleristEntity(entityType,world,true,config.mercenaryLesser), HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.mercenaryLesserMaxHealth)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.mercenaryLesserFollowRange)
             .add(EntityAttributes.GENERIC_ARMOR,config.mercenaryLesserArmor)
             .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, normalMovementSpeed* config.mercenaryLesserMovementSpeed)
             .add(EntityAttributes.GENERIC_MAX_HEALTH,config.mercenaryLesserMaxHealth)
@@ -196,7 +207,7 @@ public class RPGMinibossesEntities {
     public static final Entry<TricksterEntity> M_TRICKSTER_ENTITY_ENTRY = new Entry<TricksterEntity>("minor_trickster",
             (entityType,world) -> new TricksterEntity(entityType,world,true,config.rogueLesser),HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ATTACK_SPEED,4)
             .add(EntityAttributes.GENERIC_ATTACK_DAMAGE,config.rogueLesserAttackDamage)
             .add(EntityAttributes.GENERIC_ARMOR,config.rogueLesserArmor)
@@ -208,8 +219,8 @@ public class RPGMinibossesEntities {
             0xebcb6a,true);
 
     public static final Entry<MagusPrimeEntity> MAGuS_PRIME = new Entry<MagusPrimeEntity>("magus",
-            MagusPrimeEntity::new,HostileEntity.createHostileAttributes()
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            MagusPrimeEntity::new,withMagusFrost(HostileEntity.createHostileAttributes())
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ATTACK_SPEED,4)
             .add(EntityAttributes.GENERIC_ARMOR,config.magusArmor)
             .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, normalMovementSpeed*config.magusMovementSpeed)
@@ -227,7 +238,7 @@ public class RPGMinibossesEntities {
     public static final Entry<ArchmageFireEntity> ARCHMAGE_FIRE_ENTITY_ENTRY = new Entry<ArchmageFireEntity>("archmage_fire",
             (entityType,world) -> new ArchmageFireEntity(entityType,world,false,config.fireMageGreater),HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ATTACK_SPEED,4)
             .add(EntityAttributes.GENERIC_ARMOR,config.fireMageGreaterArmor)
             .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, normalMovementSpeed*config.fireMageMovementSpeed)
@@ -238,19 +249,19 @@ public class RPGMinibossesEntities {
     public static final Entry<TemplarEntity> TEMPLAR_ENTITY_ENTRY = new Entry<TemplarEntity>("templar",
             (entityType,world) -> new TemplarEntity(entityType,world,false,config.templarGreater),HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ATTACK_DAMAGE,config.templarGreaterAttackDamage)
             .add(EntityAttributes.GENERIC_ATTACK_SPEED,1)
             .add(EntityAttributes.GENERIC_ARMOR,config.templarGreaterArmor)
             .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, normalMovementSpeed*config.templarGreaterMovementSpeed)
-            .add(EntityAttributes.GENERIC_MAX_HEALTH,100F)
+            .add(EntityAttributes.GENERIC_MAX_HEALTH,config.templarMaxHealth)
             .add(SpellSchools.HEALING.attribute,config.templarGreaterHealingPower),
             0x09356B,
             0xebcb6a,false);
     public static final Entry<ArchmageFireEntity> M_ARCHMAGE_FIRE_ENTITY_ENTRY = new Entry<ArchmageFireEntity>("minor_archmage_fire",
             (entityType,world) -> new ArchmageFireEntity(entityType,world,true,config.fireMageLesser),HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ATTACK_SPEED,4)
             .add(EntityAttributes.GENERIC_ARMOR,config.fireMageLesserArmor)
             .add(EntityAttributes.GENERIC_MOVEMENT_SPEED, normalMovementSpeed*config.fireMageLesserMovementSpeed)
@@ -261,7 +272,7 @@ public class RPGMinibossesEntities {
     public static final Entry<TemplarEntity> M_TEMPLAR_ENTITY_ENTRY = new Entry<TemplarEntity>("minor_templar",
             (entityType,world) -> new TemplarEntity(entityType,world,true,config.templarLesser),HostileEntity.createHostileAttributes()
 
-            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,32)
+            .add(EntityAttributes.GENERIC_FOLLOW_RANGE,config.followRange)
             .add(EntityAttributes.GENERIC_ATTACK_DAMAGE,config.templarLesserAttackDamage)
             .add(EntityAttributes.GENERIC_ATTACK_SPEED,1)
             .add(EntityAttributes.GENERIC_ARMOR,config.templarLesserArmor)
@@ -276,6 +287,35 @@ public class RPGMinibossesEntities {
 
 
     public static ItemGroup RPGENTITIES;
+
+    // shouldSpawn marks the Lesser entries. The Magus is neither Lesser nor Greater and never spawns naturally.
+    private static boolean spawnsNaturally(Entry<?> entry) {
+        if (entry.shouldSpawn) {
+            return config.lesserNaturalSpawns;
+        }
+        return entry != MAGuS_PRIME && config.greaterNaturalSpawns;
+    }
+
+    private static Predicate<BiomeSelectionContext> spawnBiomes() {
+        Predicate<BiomeSelectionContext> included = config.spawnInWitchBiomes ? BiomeSelectors.spawnsOneOf(EntityType.WITCH) : context -> false;
+        for (String biome : config.extraSpawnBiomes) {
+            included = included.or(biomeSelector(biome));
+        }
+        for (String biome : config.excludedSpawnBiomes) {
+            included = included.and(biomeSelector(biome).negate());
+        }
+        return included;
+    }
+
+    private static Predicate<BiomeSelectionContext> biomeSelector(String biome) {
+        boolean isTag = biome.startsWith("#");
+        Identifier id = Identifier.tryParse(isTag ? biome.substring(1) : biome);
+        if (id == null) {
+            RPGMinibosses.LOGGER.warn("Ignoring invalid biome in rpg-minibosses config: {}", biome);
+            return context -> false;
+        }
+        return isTag ? BiomeSelectors.tag(TagKey.of(RegistryKeys.BIOME, id)) : BiomeSelectors.includeByKey(RegistryKey.of(RegistryKeys.BIOME, id));
+    }
     public static void register() {
         for (var entry: entries) {
             entry.entityType  = Registry.register(
@@ -300,8 +340,11 @@ public class RPGMinibossesEntities {
             ItemGroupEvents.modifyEntriesEvent(KEY).register((content) -> {
                 content.add(EGG);
             });
-            if(entry.shouldSpawn) {
-                BiomeModifications.addSpawn(BiomeSelectors.spawnsOneOf(EntityType.WITCH), SpawnGroup.MONSTER, entry.entityType, config.mult, 1, 1);
+            if(spawnsNaturally(entry)) {
+                if (config.mult > 0) {
+                    BiomeModifications.addSpawn(spawnBiomes(), SpawnGroup.MONSTER, entry.entityType, config.mult,
+                            Math.max(1, config.spawnGroupMin), Math.max(Math.max(1, config.spawnGroupMin), config.spawnGroupMax));
+                }
                 minibosses.add(entry);
 
             }
