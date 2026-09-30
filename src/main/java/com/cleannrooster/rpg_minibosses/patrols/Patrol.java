@@ -39,12 +39,12 @@ public class Patrol {
             if (this.cooldown > 0) {
                 return 0;
             } else {
-                this.cooldown += RPGMinibossesEntities.config.patrolCooldown + random.nextInt(RPGMinibossesEntities.config.patrolAdded);
+                this.cooldown += RPGMinibossesEntities.config.patrolCooldown + random.nextInt(Math.max(1, RPGMinibossesEntities.config.patrolAdded));
 
                 long l = world.getTimeOfDay() / 24000L;
-                if (l >= RPGMinibossesEntities.config.patrolGrace && world.isDay()) {
+                if (l >= RPGMinibossesEntities.config.patrolGrace && (!RPGMinibossesEntities.config.patrolDaytimeOnly || world.isDay())) {
 
-                    if (random.nextInt(5) != 0) {
+                    if (random.nextFloat() >= RPGMinibossesEntities.config.patrolChance || RPGMinibossesEntities.minibosses.isEmpty()) {
                         return 0;
                     } else {
                         int i = world.getPlayers().size();
@@ -55,11 +55,11 @@ public class Patrol {
                             PlayerEntity playerEntity = (PlayerEntity)world.getPlayers().get(random.nextInt(i));
                             if (playerEntity.isSpectator()) {
                                 return 0;
-                            } else if (world.isNearOccupiedPointOfInterest(playerEntity.getBlockPos(), 2)) {
+                            } else if (RPGMinibossesEntities.config.patrolAvoidVillages && world.isNearOccupiedPointOfInterest(playerEntity.getBlockPos(), 2)) {
                                 return 0;
                             } else {
-                                int j = (24 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
-                                int k = (24 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
+                                int j = patrolOffset(random);
+                                int k = patrolOffset(random);
                                 BlockPos.Mutable mutable = playerEntity.getBlockPos().mutableCopy().move(j, 0, k);
 
                                 if (!world.isRegionLoaded(mutable.getX() - 10, mutable.getZ() - 10, mutable.getX() + 10, mutable.getZ() + 10)) {
@@ -70,7 +70,7 @@ public class Patrol {
                                         return 0;
                                     } else {
                                         int n = 0;
-                                        int o = (int)Math.ceil((double)world.getLocalDifficulty(mutable).getLocalDifficulty()) + 1;
+                                        int o = (int)Math.ceil((double)world.getLocalDifficulty(mutable).getLocalDifficulty()) + RPGMinibossesEntities.config.patrolExtraMembers;
 
                                         for(int p = 0; p < o; ++p) {
                                             ++n;
@@ -99,18 +99,26 @@ public class Patrol {
             }
         }
     }
+    private static int patrolOffset(Random random) {
+        int min = Math.max(0, RPGMinibossesEntities.config.patrolMinDistance);
+        int range = Math.max(1, RPGMinibossesEntities.config.patrolMaxDistance - min);
+        return (min + random.nextInt(range)) * (random.nextBoolean() ? -1 : 1);
+    }
     public static int forceSpawn(ServerWorld world, boolean spawnMonsters, boolean spawnAnimals, PlayerEntity playerEntity){
         Random random = world.random;
+        if (RPGMinibossesEntities.minibosses.isEmpty()) {
+            return 0;
+        }
 
-        int j = (24 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
-        int k = (24 + random.nextInt(24)) * (random.nextBoolean() ? -1 : 1);
+        int j = patrolOffset(random);
+        int k = patrolOffset(random);
         BlockPos.Mutable mutable = playerEntity.getBlockPos().mutableCopy().move(j, 0, k);
         if (!world.isRegionLoaded(mutable.getX() - 10, mutable.getZ() - 10, mutable.getX() + 10, mutable.getZ() + 10)) {
             return 0;
         } else {
             RegistryEntry<Biome> registryEntry = world.getBiome(mutable);
             int n = 0;
-            int o = (int)Math.ceil((double)world.getLocalDifficulty(mutable).getLocalDifficulty()) + 1;
+            int o = (int)Math.ceil((double)world.getLocalDifficulty(mutable).getLocalDifficulty()) + RPGMinibossesEntities.config.patrolExtraMembers;
 
             for(int p = 0; p < o; ++p) {
                 ++n;
