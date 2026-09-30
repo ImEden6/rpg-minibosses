@@ -13,6 +13,7 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.loot.v2.LootTableEvents;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
@@ -21,6 +22,10 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
+import net.minecraft.loot.LootPool;
+import net.minecraft.loot.condition.RandomChanceLootCondition;
+import net.minecraft.loot.entry.ItemEntry;
+import net.minecraft.loot.provider.number.ConstantLootNumberProvider;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
@@ -31,7 +36,6 @@ import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 import net.spell_engine.api.render.CustomModels;
-import net.tinyconfig.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -110,6 +114,26 @@ public class RPGMinibosses implements ModInitializer {
 
 					return 1;
 				})));
+		LootTableEvents.MODIFY.register((resourceManager, lootManager, id, tableBuilder, source) -> {
+			// Leave tables replaced by a datapack alone.
+			if (!source.isBuiltin()) {
+				return;
+			}
+			for (RPGMinibossesEntities.Entry<?> entry : RPGMinibossesEntities.entries) {
+				if (entry == RPGMinibossesEntities.MAGuS_PRIME || !id.equals(entry.entityType.getLootTableId())) {
+					continue;
+				}
+				// shouldSpawn marks the Lesser entries.
+				float chance = entry.shouldSpawn ? RPGMinibossesEntities.config.lavosHornDropChanceLesser : RPGMinibossesEntities.config.lavosHornDropChanceGreater;
+				if (chance > 0) {
+					tableBuilder.pool(LootPool.builder()
+							.rolls(ConstantLootNumberProvider.create(1))
+							.with(ItemEntry.builder(LAVOSHORN))
+							.conditionally(RandomChanceLootCondition.builder(chance)));
+				}
+				return;
+			}
+		});
 		Patrol.patrolList.add(new Patrol());
 		LOGGER.info("Hello Fabric world!");
 	}
