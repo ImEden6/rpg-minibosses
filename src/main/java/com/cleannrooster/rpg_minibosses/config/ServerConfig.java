@@ -223,7 +223,7 @@ public class ServerConfig  implements ConfigData {
     @Comment("Distance to enforce advancement requirement.")
     public float distance = 128;
 
-    // ---- Additions in this fork. Defaults reproduce the original behaviour. ----
+    // ---- Additions in this fork. Defaults reproduce the original behaviour, except the drop chances below. ----
 
     @Comment("Forsaken Magus Frost Power (Frost school; the original mod gave the Magus none)")
     public float magusFrostSchoolPower = 0F;
@@ -241,12 +241,12 @@ public class ServerConfig  implements ConfigData {
     @Comment("Untamed cultists despawn like normal monsters when no player is near")
     public boolean despawnWhenFarAway = true;
 
-    @Comment("Chance that a Greater cultist drops a Lavos Horn (0 disables, 1 always)")
-    public float lavosHornDropChanceGreater = 0.125F;
-    @Comment("Chance that a Lesser cultist drops a Lavos Horn (0 disables, 1 always)")
-    public float lavosHornDropChanceLesser = 0.125F;
-    @Comment("Chance that a cultist drops each item it holds or wears. Above 1 the drop is guaranteed and undamaged. 0 keeps equipment on the corpse.")
-    public float equipmentDropChance = 100F;
+    @Comment("Chance that a Greater cultist drops a Lavos Horn (0 disables, 1 always; the original mod used 0.125)")
+    public float lavosHornDropChanceGreater = 0F;
+    @Comment("Chance that a Lesser cultist drops a Lavos Horn (0 disables, 1 always; the original mod used 0.125)")
+    public float lavosHornDropChanceLesser = 0F;
+    @Comment("Chance that a cultist drops each item it holds or wears. Above 1 the drop is guaranteed and undamaged. 0 keeps equipment on the corpse. The original mod used 100.")
+    public float equipmentDropChance = 0F;
 
     @Comment("Lesser cultists spawn naturally in biomes and join patrols")
     public boolean lesserNaturalSpawns = true;
